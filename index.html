@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min Budget</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css">
+</head>
+<body>
+    <div class="welcome-screen" id="welcome-screen">
+        <h1>Välkommen till Felix, helt värdelösa, budget program!</h1>
+        <div class="input-section">
+            <label for="fornamn">Förnamn:</label>
+            <input type="text" id="fornamn" placeholder="Ditt förnamn">
+        </div>
+        <div class="input-section">
+            <label for="efternamn">Efternamn:</label>
+            <input type="text" id="efternamn" placeholder="Ditt efternamn">
+        </div>
+        <button class="confirm-btn" onclick="startBudget()"><i class="fas fa-check"></i></button>
+    </div>
+
+    <div class="container" id="budget-container" style="display: none;">
+        <h1 id="budget-title">Min Budget</h1>
+        
+        <div class="input-section">
+            <h2>Vad tjänar du varje månad?</h2>
+            <select id="inkomst-namn">
+                <option value="">Välj inkomst</option>
+                <option value="Lön">Lön</option>
+                <option value="Bonus">Bonus</option>
+                <option value="Ränteinkomst">Ränteinkomst</option>
+                <option value="Utdelning">Utdelning</option>
+                <option value="Hyresintäkter">Hyresintäkter</option>
+                <option value="Bidrag">Bidrag</option>
+                <option value="Pension">Pension</option>
+                <option value="Kapitalvinst">Kapitalvinst</option>
+                <option value="Företagsvinst">Företagsvinst</option>
+                <option value="Övriga intäkter">Övriga intäkter</option>
+            </select>
+            <input type="number" id="inkomst-belopp" placeholder="Belopp i SEK" min="0">
+            <button onclick="addInkomst()"><i class="fas fa-plus"></i> Lägg till</button>
+        </div>
+
+        <div class="input-section">
+            <h2>Vad spenderar du varje månad?</h2>
+            <select id="utgift-namn">
+                <option value="">Välj utgift</option>
+                <option value="Hyra">Hyra</option>
+                <option value="Bolån">Bolån</option>
+                <option value="Mat">Mat</option>
+                <option value="Transport">Transport</option>
+                <option value="Försäkring">Försäkring</option>
+                <option value="Nöjen">Nöjen</option>
+                <option value="Räkningar">Räkningar</option>
+                <option value="Skuldbetalning">Skuldbetalning</option>
+                <option value="Abonnemang">Abonnemang</option>
+                <option value="Övriga kostnader">Övriga kostnader</option>
+            </select>
+            <input type="number" id="utgift-belopp" placeholder="Belopp i SEK" min="0">
+            <button onclick="addUtgift()"><i class="fas fa-plus"></i> Lägg till</button>
+        </div>
+
+        <div class="list-section">
+            <h2>Din lista</h2>
+            <ul id="budget-lista"></ul>
+        </div>
+
+        <div class="settings-section">
+            <h2>Inställningar</h2>
+            <div class="savings-goal">
+                <label for="savings-goal">Sparingsmål (SEK):</label>
+                <input type="number" id="savings-goal" min="0">
+            </div>
+        </div>
+
+        <div class="button-group">
+            <button class="calculate-btn" onclick="calculateBudget()"><i class="fas fa-chart-bar"></i> Visa min budget</button>
+            <button class="save-btn" onclick="saveBudget()"><i class="fas fa-save"></i> Spara</button>
+            <button class="load-btn" onclick="loadBudget()"><i class="fas fa-upload"></i> Ladda</button>
+            <button class="export-btn" onclick="exportToCSV()"><i class="fas fa-download"></i> Exportera CSV</button>
+            <button class="clear-btn" onclick="clearBudget()"><i class="fas fa-trash"></i> Rensa</button>
+            <button class="mute-btn" id="mute-btn" onclick="toggleMute()"><i class="fas fa-volume-up"></i></button>
+        </div>
+
+
+
+
+        <div class="result-section">
+            <h2>Resultat</h2>
+            <p id="budget-result"></p>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-container">
+                <canvas id="pieChart" width="300" height="300"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="barChart" width="300" height="300"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="nextMonthPieChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="bitcoin-sprite" id="bitcoin-sprite" onclick="moveBitcoin()"></div>
+    <div class="money-rain" id="money-rain"></div>
+    <div class="timer" id="timer"></div>
+    <div class="easter-egg" id="easter-egg"></div>
+    <div class="fps-game" id="fps-game" style="display: none;">
+        <!-- Mobilkontroller för bossfight och skjutspel -->
+<div class="mobile-controls">
+    <!-- Piltangenter för bossfight -->
+    <button class="mobile-btn arrow-left" id="mobile-left"><i class="fas fa-arrow-left"></i></button>
+    <button class="mobile-btn arrow-right" id="mobile-right"><i class="fas fa-arrow-right"></i></button>
+    <button class="mobile-btn arrow-up" id="mobile-up"><i class="fas fa-arrow-up"></i></button>
+    <button class="mobile-btn arrow-down" id="mobile-down"><i class="fas fa-arrow-down"></i></button>
+    <!-- Skjutknapp för både bossfight och skjutspel -->
+    <button class="mobile-btn shoot-btn" id="mobile-shoot">Skjut</button>
+</div>
+        <canvas id="fps-canvas"></canvas>
+        <div Strauss="fps-score" id="fps-score">Träffar: 0 / 3</div>
+        <div class="fps-timer" id="fps-timer">Tid kvar: 20s</div>
+    </div>
+
+    <audio id="clickSound" src="https://cdn.pixabay.com/audio/2022/03/10/audio_1f6d9a0355.mp3"></audio>
+    <audio id="winSound" src="https://firebasestorage.googleapis.com/v0/b/soundsbutton-8f5bb.appspot.com/o/sounds%2FEe58Mrdv3wUmchMaUQqYfX92Dac2_1732546705028_30?alt=media&token=f6d76b51-e1f4-4563-a76f-48a839f1856a.mp3"></audio>
+    <audio id="shootSound" src="https://cdn.pixabay.com/audio/2022/03/10/audio_0e14f2cb36.mp3"></audio>
+    <audio id="hitSound" src="https://cdn.pixabay.com/audio/2022/10/16/audio_13dc3ab58b.mp3"></audio>
+    <audio id="fpsBackgroundSound" src="https://cdn.pixabay.com/audio/2022/06/25/audio_1f60fe295f.mp3" loop></audio>
+    <audio id="bossBackgroundSound" src="https://cdn.pixabay.com/audio/2024/07/18/audio_3a5860bd92.mp3" loop></audio>
+    <audio id="bossShootSound" src="https://cdn.pixabay.com/audio/2024/08/30/audio_68d83e5b2d.mp3"></audio>
+    <audio id="bossHitSound" src="https://cdn.pixabay.com/audio/2024/11/10/audio_8fe8cc7d10.mp3"></audio>
+    <audio id="playerHitSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_b3bd7478eb.mp3"></audio>
+
+    <script src="script.js"></script>
+</body>
+</html>
