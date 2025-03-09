@@ -380,19 +380,23 @@ function clearBudget() {
 }
 
 function restartBudget() {
+    // Rensa all budgetdata
     clearBudget();
+
+    // Hämta elementen
     const budgetContainer = document.getElementById("budget-container");
     const welcomeScreen = document.getElementById("welcome-screen");
-    budgetContainer.style.opacity = "0";
-    setTimeout(() => {
-        budgetContainer.style.display = "none";
-        welcomeScreen.style.display = "block";
-        welcomeScreen.style.opacity = "0";
-        setWelcomeBackground();
-        setTimeout(() => welcomeScreen.style.opacity = "1", 50);
-        document.getElementById("fornamn").value = "";
-        document.getElementById("efternamn").value = "";
-    }, 500);
+
+    // Dölj budgetcontainern direkt
+    budgetContainer.style.display = "none";
+
+    // Visa och återställ välkomstskärmen
+    welcomeScreen.style.display = "block";
+    setWelcomeBackground();
+    document.getElementById("fornamn").value = "";
+    document.getElementById("efternamn").value = "";
+
+    // Spela klickljud
     playClickSound();
 }
 
@@ -610,6 +614,34 @@ function triggerBudgetBoss() {
 
     if (!isMuted) bossBackgroundSound.play().catch(() => console.log("Boss bakgrundsljud kunde inte spelas"));
 
+    // Mobilkontroller
+    const leftBtn = document.getElementById("mobile-left");
+    const rightBtn = document.getElementById("mobile-right");
+    const upBtn = document.getElementById("mobile-up");
+    const downBtn = document.getElementById("mobile-down");
+    const shootBtn = document.getElementById("mobile-shoot");
+
+    // Hantera knapptryckningar för rörelse
+    function updateMovement() {
+        leftBtn.addEventListener("touchstart", () => player.dx = -5);
+        leftBtn.addEventListener("touchend", () => player.dx = 0);
+        rightBtn.addEventListener("touchstart", () => player.dx = 5);
+        rightBtn.addEventListener("touchend", () => player.dx = 0);
+        upBtn.addEventListener("touchstart", () => player.dy = -5);
+        upBtn.addEventListener("touchend", () => player.dy = 0);
+        downBtn.addEventListener("touchstart", () => player.dy = 5);
+        downBtn.addEventListener("touchend", () => player.dy = 0);
+    }
+
+    // Hantera skjutning
+    shootBtn.addEventListener("touchstart", () => {
+        if (gameActive) {
+            arrows.push({ x: player.x + player.width / 2, y: player.y, dy: -7 });
+            if (!isMuted) bossShootSound.play().catch(() => console.log("Boss skottljud kunde inte spelas"));
+        }
+    });
+
+    // Tangentbordshanterare
     document.addEventListener("keydown", (e) => {
         if (!gameActive) return;
         switch (e.key) {
@@ -633,6 +665,9 @@ function triggerBudgetBoss() {
             case "ArrowDown": case "s": case "S": if (player.dy > 0) player.dy = 0; break;
         }
     });
+
+    // Kör rörelseuppdatering för mobilen
+    updateMovement();
 
     function drawHpBar(x, y, width, height, hp, maxHp, color) {
         const hpWidth = (hp / maxHp) * width;
