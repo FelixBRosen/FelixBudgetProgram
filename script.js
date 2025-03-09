@@ -481,6 +481,26 @@ function triggerFPSGame() {
     scoreElement.textContent = `Träffar: ${redHits} / ${currentRedCount()}`;
     timerElement.textContent = `Tid kvar: ${timeLeft}s`;
 
+    // Mobil skjutknapp
+    const shootBtn = document.getElementById("mobile-shoot");
+    shootBtn.addEventListener("touchstart", (e) => {
+        if (!gameActive || isMuted) return;
+        shootSound.play().catch(() => console.log("Skottljud kunde inte spelas"));
+        const canvasRect = canvas.getBoundingClientRect();
+        const touchX = canvas.width / 2; // Skjuter alltid från mitten
+        const touchY = canvas.height / 2;
+        const angle = Math.atan2(-canvas.height, 0); // Skjuter uppåt som standard
+        arrows.push({ x: touchX, y: touchY, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
+    });
+
+    // Tangentbord/mus-kontroller
+    canvas.addEventListener("click", (e) => {
+        if (!gameActive || isMuted) return;
+        shootSound.play().catch(() => console.log("Skottljud kunde inte spelas"));
+        const angle = Math.atan2(e.clientY - canvas.height / 2, e.clientX - canvas.width / 2);
+        arrows.push({ x: canvas.width / 2, y: canvas.height / 2, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
+    }, { once: false });
+
     function updateGame() {
         if (!gameActive) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -544,13 +564,6 @@ function triggerFPSGame() {
             if (gameActive) endGame(false);
         }
     }, 1000);
-
-    canvas.addEventListener("click", (e) => {
-        if (!gameActive || isMuted) return;
-        shootSound.play().catch(() => console.log("Skottljud kunde inte spelas"));
-        const angle = Math.atan2(e.clientY - canvas.height / 2, e.clientX - canvas.width / 2);
-        arrows.push({ x: canvas.width / 2, y: canvas.height / 2, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
-    }, { once: false });
 
     function endGame(won) {
         if (!gameActive) return;
