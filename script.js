@@ -481,26 +481,6 @@ function triggerFPSGame() {
     scoreElement.textContent = `Träffar: ${redHits} / ${currentRedCount()}`;
     timerElement.textContent = `Tid kvar: ${timeLeft}s`;
 
-    // Mobil skjutknapp
-    const shootBtn = document.getElementById("mobile-shoot");
-    shootBtn.addEventListener("touchstart", (e) => {
-        if (!gameActive || isMuted) return;
-        shootSound.play().catch(() => console.log("Skottljud kunde inte spelas"));
-        const canvasRect = canvas.getBoundingClientRect();
-        const touchX = canvas.width / 2; // Skjuter alltid från mitten
-        const touchY = canvas.height / 2;
-        const angle = Math.atan2(-canvas.height, 0); // Skjuter uppåt som standard
-        arrows.push({ x: touchX, y: touchY, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
-    });
-
-    // Tangentbord/mus-kontroller
-    canvas.addEventListener("click", (e) => {
-        if (!gameActive || isMuted) return;
-        shootSound.play().catch(() => console.log("Skottljud kunde inte spelas"));
-        const angle = Math.atan2(e.clientY - canvas.height / 2, e.clientX - canvas.width / 2);
-        arrows.push({ x: canvas.width / 2, y: canvas.height / 2, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
-    }, { once: false });
-
     function updateGame() {
         if (!gameActive) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -565,6 +545,13 @@ function triggerFPSGame() {
         }
     }, 1000);
 
+    canvas.addEventListener("click", (e) => {
+        if (!gameActive || isMuted) return;
+        shootSound.play().catch(() => console.log("Skottljud kunde inte spelas"));
+        const angle = Math.atan2(e.clientY - canvas.height / 2, e.clientX - canvas.width / 2);
+        arrows.push({ x: canvas.width / 2, y: canvas.height / 2, dx: Math.cos(angle) * 5, dy: Math.sin(angle) * 5 });
+    }, { once: false });
+
     function endGame(won) {
         if (!gameActive) return;
         gameActive = false;
@@ -590,12 +577,6 @@ function triggerFPSGame() {
     }
 
     updateGame();
-}
-
-function resetLeetEasterEggFlags() {
-    leetIncomeAdded = false;
-    leetExpenseAdded = false;
-    bitcoinClicks = 0;
 }
 
 function checkBossEasterEgg() {
@@ -627,34 +608,6 @@ function triggerBudgetBoss() {
 
     if (!isMuted) bossBackgroundSound.play().catch(() => console.log("Boss bakgrundsljud kunde inte spelas"));
 
-    // Mobilkontroller
-    const leftBtn = document.getElementById("mobile-left");
-    const rightBtn = document.getElementById("mobile-right");
-    const upBtn = document.getElementById("mobile-up");
-    const downBtn = document.getElementById("mobile-down");
-    const shootBtn = document.getElementById("mobile-shoot");
-
-    // Hantera knapptryckningar för rörelse
-    function updateMovement() {
-        leftBtn.addEventListener("touchstart", () => player.dx = -5);
-        leftBtn.addEventListener("touchend", () => player.dx = 0);
-        rightBtn.addEventListener("touchstart", () => player.dx = 5);
-        rightBtn.addEventListener("touchend", () => player.dx = 0);
-        upBtn.addEventListener("touchstart", () => player.dy = -5);
-        upBtn.addEventListener("touchend", () => player.dy = 0);
-        downBtn.addEventListener("touchstart", () => player.dy = 5);
-        downBtn.addEventListener("touchend", () => player.dy = 0);
-    }
-
-    // Hantera skjutning
-    shootBtn.addEventListener("touchstart", () => {
-        if (gameActive) {
-            arrows.push({ x: player.x + player.width / 2, y: player.y, dy: -7 });
-            if (!isMuted) bossShootSound.play().catch(() => console.log("Boss skottljud kunde inte spelas"));
-        }
-    });
-
-    // Tangentbordshanterare
     document.addEventListener("keydown", (e) => {
         if (!gameActive) return;
         switch (e.key) {
@@ -678,9 +631,6 @@ function triggerBudgetBoss() {
             case "ArrowDown": case "s": case "S": if (player.dy > 0) player.dy = 0; break;
         }
     });
-
-    // Kör rörelseuppdatering för mobilen
-    updateMovement();
 
     function drawHpBar(x, y, width, height, hp, maxHp, color) {
         const hpWidth = (hp / maxHp) * width;
