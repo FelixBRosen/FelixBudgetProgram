@@ -25,6 +25,26 @@ body {
     background: linear-gradient(135deg, #3498DB, #ECF0F1);
 }
 
+input[type="number"]#utgift-multiplikator {
+    width: 80px;
+    margin-left: 5px;
+}
+
+#barn-section {
+    background: #fff;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+#barn-section label {
+    margin-right: 10px;
+}
+
+#barn-ages-list div {
+    margin-bottom: 10px;
+}
+
 h1, h2 {
     color: #2C3E50;
     margin: 10px 0;
@@ -225,6 +245,29 @@ button:hover {
     background-size: contain;
     animation: rotateCoin 2s linear infinite;
     cursor: pointer;
+}
+
+.dollar {
+    position: absolute;
+    width: 188px; /* Uppdaterat från 75px */
+    height: 93px; /* Uppdaterat från 37px */
+    animation: fall 4s linear infinite;
+    background: none; /* Säkerställ ingen bakgrund */
+}
+
+@keyframes fall {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
+}
+
+@keyframes fall {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
+}
+
+@keyframes fall {
+    0% { transform: translateY(-100vh); }
+    100% { transform: translateY(100vh); }
 }
 
 @keyframes rotateCoin {
