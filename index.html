@@ -13,7 +13,7 @@
 </head>
 <body>
     <div class="welcome-screen" id="welcome-screen">
-        <h1>Välkommen till Felix, helt värdelösa, budget program!</h1>
+        <h1>Välkommen till Felix, helt värdelösa, budget-program!</h1>
         <div class="input-section">
             <label for="fornamn">Förnamn:</label>
             <input type="text" id="fornamn" placeholder="Ditt förnamn">
@@ -29,7 +29,7 @@
         <h1 id="budget-title">Min Budget</h1>
         
         <div class="input-section">
-            <h2>Vad tjänar du varje månad?</h2>
+            <h2>Vad tjänar du varje månad efter skatt?</h2>
             <select id="inkomst-namn">
                 <option value="">Välj inkomst</option>
                 <option value="Lön">Lön</option>
@@ -63,9 +63,54 @@
                 <option value="Övriga kostnader">Övriga kostnader</option>
             </select>
             <input type="number" id="utgift-belopp" placeholder="Belopp i SEK" min="0" style="width: 120px;">
-            <input type="number" id="utgift-multiplier" placeholder="Antal" min="1" value="1" style="width: 80px;">
+            <input type="number" id="utgift-multiplikator" placeholder="Antal ggr" min="1" value="1" style="width: 80px;">
             <button onclick="addUtgift()"><i class="fas fa-plus"></i> Lägg till</button>
         </div>
+        
+        <!-- Ny sektion för Familj -->
+        <div class="input-section">
+            <label>Familj?</label>
+            <input type="checkbox" id="familj-checkbox" onchange="toggleBarnSection(this.checked)">
+        </div>
+        
+        <div id="barn-section" style="display: none; margin-top: 20px;">
+            <h3>Barnutgifter</h3>
+            <div class="input-section">
+                <label for="barn-antal">Hur många barn har du?</label>
+                <input type="number" id="barn-antal" min="0" value="0" onchange="updateBarnAges()">
+            </div>
+            <div id="barn-ages-list"></div>
+            <div class="input-section">
+                <label>Mat:</label>
+                <label><input type="radio" name="barn-mat" value="all-hema" checked> All mat lagas hemma</label>
+                <label><input type="radio" name="barn-mat" value="utom-lunch"> All mat lagas hemma utom lunch vardagar</label>
+            </div>
+            <div class="input-section">
+                <label for="hushall-storlek">Hur många är ni totalt? (1-10)</label>
+                <input type="number" id="hushall-storlek" min="1" max="10" value="1">
+            </div>
+            <button onclick="calculateBarnUtgift()">Lägg till barnutgifter</button>
+        </div>
+
+<!-- Ny sektion för barnutgifter -->
+<div id="barn-section" style="display: none; margin-top: 20px;">
+    <h3>Barnutgifter</h3>
+    <div class="input-section">
+        <label for="barn-antal">Hur många barn har du?</label>
+        <input type="number" id="barn-antal" min="0" value="0" onchange="updateBarnAges()">
+    </div>
+    <div id="barn-ages-list"></div>
+    <div class="input-section">
+        <label>Mat:</label>
+        <label><input type="radio" name="barn-mat" value="all-hema" checked> All mat lagas hemma</label>
+        <label><input type="radio" name="barn-mat" value="utom-lunch"> All mat lagas hemma utom lunch vardagar</label>
+    </div>
+    <div class="input-section">
+        <label for="hushall-storlek">Hur många är ni totalt? (1-10)</label>
+        <input type="number" id="hushall-storlek" min="1" max="10" value="1">
+    </div>
+    <button onclick="calculateBarnUtgift()">Lägg till barnutgifter</button>
+</div>
 
         <div class="list-section">
             <h2>Din lista</h2>
