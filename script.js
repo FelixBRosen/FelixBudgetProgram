@@ -65,19 +65,133 @@ function addInkomst() {
     }
 }
 
+function toggleBarnSection(checked) {
+    document.getElementById("barn-section").style.display = checked ? "block" : "none";
+    if (!checked) {
+        delete utgifter["Familj"]; // Ta bort Familj om checkboxen avmarkeras
+        updateList();
+        calculateBudget();
+    }
+}
+
 function addUtgift() {
     const namn = document.getElementById("utgift-namn").value;
     const belopp = parseFloat(document.getElementById("utgift-belopp").value);
-    if (namn && !isNaN(belopp) && belopp >= 0) {
-        utgifter[namn] = belopp;
-        updateList();
-        clearInputs("utgift");
-        playClickSound();
-        if (bitcoinClicks > 0 && belopp === 1337) leetExpenseAdded = true, checkLeetEasterEgg();
-        if (belopp === 777) checkBossEasterEgg();
+    const multiplikator = parseInt(document.getElementById("utgift-multiplikator").value) || 1;
+    if (namn && !isNaN(belopp) && belopp >= 0 && multiplikator >= 1) {
+        if (namn !== "Barn") { // Ta bort Barn från menyn, hanteras separat
+            utgifter[namn] = { belopp: belopp, multiplikator: multiplikator, total: belopp * multiplikator };
+            updateList();
+            clearInputs("utgift");
+            playClickSound();
+            if (bitcoinClicks > 0 && belopp * multiplikator === 1337) leetExpenseAdded = true, checkLeetEasterEgg();
+            if (belopp * multiplikator === 777) checkBossEasterEgg();
+        }
     } else {
-        Toastify({ text: "Ange giltig utgift!", duration: 3000, style: { background: "#E74C3C" } }).showToast();
+        Toastify({ text: "Ange giltig utgift och multiplikator!", duration: 3000, style: { background: "#E74C3C" } }).showToast();
     }
+}
+
+function updateBarnAges() {
+    const antal = parseInt(document.getElementById("barn-antal").value) || 0;
+    const ageList = document.getElementById("barn-ages-list");
+    ageList.innerHTML = "";
+    for (let i = 0; i < antal; i++) {
+        const div = document.createElement("div");
+        div.innerHTML = `<label>Ålder för barn ${i + 1}:</label> <input type="number" id="barn-alder-${i}" min="0" max="17" value="0"> år`;
+        ageList.appendChild(div);
+    }
+}
+
+function calculateBarnUtgift() {
+    const antalBarn = parseInt(document.getElementById("barn-antal").value) || 0;
+    if (antalBarn === 0) {
+        Toastify({ text: "Ange minst ett barn!", duration: 3000, style: { background: "#E74C3C" } }).showToast();
+        return;
+    }
+    const matVal = document.querySelector('input[name="barn-mat"]:checked').value;
+    const hushallStorlek = parseInt(document.getElementById("hushall-storlek").value) || 1;
+    if (hushallStorlek < 1 || hushallStorlek > 10) {
+        Toastify({ text: "Ange en giltig hushållsstorlek (1-10)!", duration: 3000, style: { background: "#E74C3C" } }).showToast();
+        return;
+    }
+
+    // Matkostnader per barn (från bilden, i SEK)
+    const matKostnader = {
+        "6-11": { "all-hema": 1050, "utom-lunch": 710 },
+        "1": { "all-hema": 1210, "utom-lunch": 910 },
+        "2-5": { "all-hema": 1610, "utom-lunch": 1240 },
+        "6-9": { "all-hema": 2390, "utom-lunch": 1830 },
+        "10-13": { "all-hema": 3610, "utom-lunch": 2770 },
+        "14-17": { "all-hema": 3960, "utom-lunch": 3040 },
+        "18-30": { "all-hema": 3730, "utom-lunch": 2860 },
+        "31-60": { "all-hema": 3350, "utom-lunch": 2570 },
+        "61-74": { "all-hema": 3350, "utom-lunch": 2570 }
+    };
+
+    // Övriga kostnader per barn (från bilden, i SEK)
+    const ovrigaKostnader = {
+        "0": { "klader": 1050, "leksaker": 120, "mobiltelefon": 0, "personlig_hygien": 500, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 980 },
+        "1-3": { "klader": 1030, "leksaker": 240, "mobiltelefon": 0, "personlig_hygien": 650, "barn_och_hygien": 170, "undomsfor_sakring": 220, "ovrig_barntrustning": 530 },
+        "4-6": { "klader": 1110, "leksaker": 410, "mobiltelefon": 0, "personlig_hygien": 170, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 20 },
+        "7-10": { "klader": 990, "leksaker": 430, "mobiltelefon": 70, "personlig_hygien": 350, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 },
+        "11-14": { "klader": 850, "leksaker": 400, "mobiltelefon": 120, "personlig_hygien": 550, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 },
+        "15-17": { "klader": 850, "leksaker": 510, "mobiltelefon": 120, "personlig_hygien": 560, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 },
+        "18-25": { "klader": 800, "leksaker": 590, "mobiltelefon": 100, "personlig_hygien": 570, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 },
+        "26-49": { "klader": 700, "leksaker": 580, "mobiltelefon": 100, "personlig_hygien": 480, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 },
+        "50-64": { "klader": 700, "leksaker": 550, "mobiltelefon": 100, "personlig_hygien": 480, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 },
+        "65+": { "klader": 700, "leksaker": 550, "mobiltelefon": 100, "personlig_hygien": 480, "barn_och_hygien": 0, "undomsfor_sakring": 220, "ovrig_barntrustning": 0 }
+    };
+
+    // Hushållskostnader per person (från bilden, extrapolerat för 8-10)
+    const hushallKostnader = {
+        1: 3400,
+        2: 4170,
+        3: 5190,
+        4: 6130,
+        5: 7010,
+        6: 7820,
+        7: 8670,
+        8: 9520,
+        9: 10370,
+        10: 11220
+    };
+
+    let totalBarnKostnad = 0;
+
+    // Beräkna kostnad per barn
+    for (let i = 0; i < antalBarn; i++) {
+        const alder = parseInt(document.getElementById(`barn-alder-${i}`).value) || 0;
+        let alderIntervall = "0";
+        if (alder >= 1 && alder <= 3) alderIntervall = "1-3";
+        else if (alder >= 4 && alder <= 6) alderIntervall = "4-6";
+        else if (alder >= 7 && alder <= 10) alderIntervall = "7-10";
+        else if (alder >= 11 && alder <= 14) alderIntervall = "11-14";
+        else if (alder >= 15 && alder <= 17) alderIntervall = "15-17";
+        else if (alder >= 18 && alder <= 25) alderIntervall = "18-25";
+        else if (alder >= 26 && alder <= 49) alderIntervall = "26-49";
+        else if (alder >= 50 && alder <= 64) alderIntervall = "50-64";
+        else if (alder >= 65) alderIntervall = "65+";
+
+        // Lägg till matkostnad
+        totalBarnKostnad += matKostnader[alderIntervall] && matKostnader[alderIntervall][matVal] ? matKostnader[alderIntervall][matVal] : 0;
+
+        // Lägg till övriga kostnader
+        const ovrigt = ovrigaKostnader[alderIntervall] || ovrigaKostnader["0"];
+        totalBarnKostnad += ovrigt.klader + ovrigt.leksaker + ovrigt.mobiltelefon + ovrigt.personlig_hygien + ovrigt.barn_och_hygien + ovrigt.undomsfor_sakring + ovrigt.ovrig_barntrustning;
+    }
+
+    // Lägg till hushållskostnad (justera baserat på totala hushållet)
+    const hushallKostnad = hushallKostnader[hushallStorlek] || hushallKostnader[1];
+    totalBarnKostnad += hushallKostnad;
+
+    // Spara barnutgiften
+    utgifter["Familj"] = { belopp: totalBarnKostnad, multiplikator: 1, total: totalBarnKostnad };
+    updateList();
+    document.getElementById("barn-section").style.display = "none"; // Dölj efter beräkning
+    clearInputs("utgift");
+    playClickSound();
+    calculateBudget(); // Uppdatera budgeten direkt
 }
 
 function deleteItem(type, key) {
@@ -88,12 +202,25 @@ function deleteItem(type, key) {
 }
 
 function editItem(type, key) {
-    const newAmount = prompt(`Nytt belopp för ${key} (SEK):`, type === "inkomst" ? inkomster[key] : utgifter[key]);
-    if (newAmount !== null && !isNaN(newAmount) && newAmount >= 0) {
-        if (type === "inkomst") inkomster[key] = parseFloat(newAmount);
-        else utgifter[key] = parseFloat(newAmount);
-        updateList();
-        playClickSound();
+    if (type === "inkomst") {
+        const newAmount = prompt(`Nytt belopp för ${key} (SEK):`, inkomster[key]);
+        if (newAmount !== null && !isNaN(newAmount) && newAmount >= 0) {
+            inkomster[key] = parseFloat(newAmount);
+            updateList();
+            playClickSound();
+        }
+    } else {
+        const newAmount = prompt(`Nytt belopp för ${key} (SEK):`, utgifter[key].belopp);
+        const newMultiplier = prompt(`Nytt antal gånger för ${key}:`, utgifter[key].multiplikator);
+        if (newAmount !== null && !isNaN(newAmount) && newAmount >= 0 && newMultiplier !== null && !isNaN(newMultiplier) && newMultiplier >= 1) {
+            utgifter[key] = {
+                belopp: parseFloat(newAmount),
+                multiplikator: parseInt(newMultiplier),
+                total: parseFloat(newAmount) * parseInt(newMultiplier)
+            };
+            updateList();
+            playClickSound();
+        }
     }
 }
 
@@ -114,7 +241,7 @@ function updateList() {
     }
     for (let namn in utgifter) {
         const li = document.createElement("li");
-        li.innerHTML = `Spenderar: ${namn} - ${utgifter[namn]} SEK 
+        li.innerHTML = `Spenderar: ${namn} - ${utgifter[namn].belopp} SEK x ${utgifter[namn].multiplikator} = ${utgifter[namn].total} SEK 
             <button class="edit-btn" onclick="editItem('utgift', '${namn}')"><i class="fas fa-edit"></i></button>
             <button class="delete-btn" onclick="deleteItem('utgift', '${namn}')"><i class="fas fa-trash"></i></button>`;
         lista.appendChild(li);
@@ -177,19 +304,20 @@ function submitAddForm() {
 function calculateBudget() {
     const currency = "SEK";
     const rate = 1;
-    const totalInkomst = Object.values(inkomster).reduce((a, b) => a + b, 0) * rate;
-    const totalUtgifter = Object.values(utgifter).reduce((a, b) => a + b, 0) * rate;
+    const totalInkomst = Object.values(inkomster).reduce((a, b) => a + b, 0) * rate || 0;
+    const totalUtgifter = Object.values(utgifter).reduce((a, b) => a + (b.total || 0), 0) * rate || 0; // Säkerställ giltigt värde
     const savingsGoal = parseFloat(document.getElementById("savings-goal").value) || 0;
     let kvar = totalInkomst - totalUtgifter;
     const procentKvar = totalInkomst > 0 ? (kvar / totalInkomst) * 100 : 0;
 
     updateBackground(procentKvar);
 
+    // Pie Chart
     if (pieChart) pieChart.destroy();
     const pieCtx = document.getElementById("pieChart").getContext("2d");
-    const pieLabels = Object.keys(utgifter).concat("Kvar");
-    const pieData = Object.values(utgifter).map(val => val * rate).concat(Math.max(0, kvar));
-    const pieColors = Object.keys(utgifter).map((_, i) => colors[i % colors.length]).concat("#2196F3");
+    const pieLabels = Object.keys(utgifter).length > 0 ? Object.keys(utgifter).concat("Kvar") : ["Inga utgifter", "Kvar"];
+    const pieData = Object.values(utgifter).length > 0 ? Object.values(utgifter).map(val => (val.total || 0) * rate).concat(Math.max(0, kvar)) : [0, Math.max(0, kvar)];
+    const pieColors = Object.keys(utgifter).length > 0 ? Object.keys(utgifter).map((_, i) => colors[i % colors.length]).concat("#2196F3") : ["#E74C3C", "#2196F3"];
     pieChart = new Chart(pieCtx, {
         type: "pie",
         data: {
@@ -203,6 +331,7 @@ function calculateBudget() {
         }
     });
 
+    // Bar Chart
     if (barChart) barChart.destroy();
     const barCtx = document.getElementById("barChart").getContext("2d");
     barChart = new Chart(barCtx, {
@@ -223,6 +352,7 @@ function calculateBudget() {
         }
     });
 
+    // Next Month Pie Chart
     if (nextMonthPieChart) nextMonthPieChart.destroy();
     const nextMonthCtx = document.getElementById("nextMonthPieChart").getContext("2d");
     let nextMonthChartConfig = { type: "pie", data: { labels: [], datasets: [{}] }, options: {} };
@@ -294,11 +424,11 @@ function calculateBudget() {
 
     for (let namn in utgifter) {
         const namnLower = namn.toLowerCase();
-        if (namnLower.includes("mat") && utgifter[namn] * rate > 250 * rate) {
-            resultText += `\n- Hög matkostnad (${(utgifter[namn] * rate).toFixed(2)} ${currency})! Planera måltider och handla i bulk.\n`;
+        if (namnLower.includes("mat") && utgifter[namn].total * rate > 250 * rate) {
+            resultText += `\n- Hög matkostnad (${(utgifter[namn].total * rate).toFixed(2)} ${currency})! Planera måltider och handla i bulk.\n`;
         }
-        if (namnLower.includes("nöjen") && utgifter[namn] * rate > 100 * rate) {
-            resultText += `- Hög nöjeskostnad (${(utgifter[namn] * rate).toFixed(2)} ${currency})! Testa gratis aktiviteter.\n`;
+        if (namnLower.includes("nöjen") && utgifter[namn].total * rate > 100 * rate) {
+            resultText += `- Hög nöjeskostnad (${(utgifter[namn].total * rate).toFixed(2)} ${currency})! Testa gratis aktiviteter.\n`;
         }
     }
 
@@ -580,7 +710,11 @@ function triggerFPSGame() {
 }
 
 function checkBossEasterEgg() {
-    if (bitcoinClicks >= 5 && Object.values(inkomster).includes(777) && Object.values(utgifter).includes(777)) triggerBudgetBoss();
+    const hasIncome777 = Object.values(inkomster).includes(777);
+    const hasExpense5439 = Object.values(utgifter).some(u => u.total === 5439);
+    if (hasIncome777 && hasExpense5439 && bitcoinClicks >= 7) {
+        triggerBudgetBoss();
+    }
 }
 
 function triggerBudgetBoss() {
@@ -593,8 +727,8 @@ function triggerBudgetBoss() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    let player = { x: canvas.width / 2 - 25, y: canvas.height / 2 - 25, width: 50, height: 50, hp: 4, maxHp: 4, dx: 0, dy: 0 };
-    let boss = { x: canvas.width / 2 - 82.5, y: 50, width: 165, height: 165, hp: 30, maxHp: 30, dx: (Math.random() - 0.5) * 4, dy: (Math.random() - 0.5) * 4 };
+    let player = { x: canvas.width / 2 - 25, y: canvas.height / 2 - 25, width: 50, height: 50, hp: 8, maxHp: 8, dx: 0, dy: 0 };
+    let boss = { x: canvas.width / 2 - 82.5, y: 50, width: 165, height: 165, hp: 60, maxHp: 60, dx: (Math.random() - 0.5) * 8, dy: (Math.random() - 0.5) * 8 };
     let arrows = [];
     let bossShots = [];
     let fireballs = [];
@@ -603,21 +737,29 @@ function triggerBudgetBoss() {
 
     const bossImage = new Image();
     bossImage.src = "https://png.pngtree.com/png-clipart/20210810/ourlarge/pngtree-evil-samurai-ghost-mask-png-image_3794643.jpg";
-    bossImage.onerror = () => { boss.width = 110; boss.height = 110; };
     bossImage.onload = () => { boss.width = 165; boss.height = 165; boss.x = canvas.width / 2 - boss.width / 2; boss.y = 50; };
+    bossImage.onerror = () => {
+        console.log("Bossbild laddades inte, använder fallback.");
+        boss.width = 110; boss.height = 110; // Fallback-storlek
+    };
 
-    if (!isMuted) bossBackgroundSound.play().catch(() => console.log("Boss bakgrundsljud kunde inte spelas"));
+    const fireballImage = new Image();
+    fireballImage.src = "https://cdn.textures4photoshop.com/tex/thumbs/fireball-PNG-transparent-background-thumb35.png";
+    fireballImage.onload = () => console.log("Eldbollsbild laddad.");
+    fireballImage.onerror = () => console.log("Eldbollsbild laddades inte, använder fallback.");
+
+    if (!isMuted) bossBackgroundSound.play().catch((err) => console.log("Boss bakgrundsljud kunde inte spelas:", err));
 
     document.addEventListener("keydown", (e) => {
         if (!gameActive) return;
         switch (e.key) {
-            case "ArrowLeft": case "a": case "A": player.dx = -5; break;
-            case "ArrowRight": case "d": case "D": player.dx = 5; break;
-            case "ArrowUp": case "w": case "W": player.dy = -5; break;
-            case "ArrowDown": case "s": case "S": player.dy = 5; break;
-            case " ": 
-                arrows.push({ x: player.x + player.width / 2, y: player.y, dy: -7 });
-                if (!isMuted) bossShootSound.play().catch(() => console.log("Boss skottljud kunde inte spelas"));
+            case "ArrowLeft": case "a": case "A": player.dx = -10; break;
+            case "ArrowRight": case "d": case "D": player.dx = 10; break;
+            case "ArrowUp": case "w": case "W": player.dy = -10; break;
+            case "ArrowDown": case "s": case "S": player.dy = 10; break;
+            case " ":
+                arrows.push({ x: player.x + player.width / 2, y: player.y, dy: -14 });
+                if (!isMuted) bossShootSound.play().catch((err) => console.log("Boss skottljud kunde inte spelas:", err));
                 break;
         }
     });
@@ -646,10 +788,12 @@ function triggerBudgetBoss() {
         if (!gameActive) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+        // Spelare
         ctx.fillStyle = "blue";
         ctx.fillRect(player.x, player.y, player.width, player.height);
         drawHpBar(player.x, player.y, player.width, player.height, player.hp, player.maxHp, "green");
 
+        // Boss
         if (bossImage.complete && bossImage.naturalWidth !== 0) {
             ctx.drawImage(bossImage, boss.x, boss.y, boss.width, boss.height);
         } else {
@@ -658,6 +802,7 @@ function triggerBudgetBoss() {
         }
         drawHpBar(boss.x, boss.y, boss.width, boss.height, boss.hp, boss.maxHp, "red");
 
+        // Rörelse
         player.x += player.dx;
         player.y += player.dy;
         if (player.x < 0) player.x = 0;
@@ -670,10 +815,11 @@ function triggerBudgetBoss() {
         if (boss.x < 0 || boss.x + boss.width > canvas.width) boss.dx = -boss.dx;
         if (boss.y < 0 || boss.y + boss.height > canvas.height - 100) boss.dy = -boss.dy;
         if (Math.random() < 0.05) {
-            boss.dx = (Math.random() - 0.5) * 4;
-            boss.dy = (Math.random() - 0.5) * 4;
+            boss.dx = (Math.random() - 0.5) * 8;
+            boss.dy = (Math.random() - 0.5) * 8;
         }
 
+        // Pilar
         arrows.forEach((arrow, index) => {
             ctx.fillStyle = "yellow";
             ctx.fillRect(arrow.x - 5, arrow.y, 10, 20);
@@ -682,14 +828,15 @@ function triggerBudgetBoss() {
             if (arrow.x > boss.x && arrow.x < boss.x + boss.width && arrow.y > boss.y && arrow.y < boss.y + boss.height) {
                 arrows.splice(index, 1);
                 boss.hp--;
-                if (!isMuted) bossHitSound.play().catch(() => console.log("Boss träffljud kunde inte spelas"));
+                if (!isMuted) bossHitSound.play().catch((err) => console.log("Boss träffljud kunde inte spelas:", err));
                 if (boss.hp <= 0) endGame(true);
             }
         });
 
+        // Boss-skott
         if (Math.random() < 0.03) {
             const angle = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2));
-            bossShots.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, dx: Math.cos(angle) * 4, dy: Math.sin(angle) * 4, size: 10 });
+            bossShots.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, dx: Math.cos(angle) * 8, dy: Math.sin(angle) * 8, size: 10 });
         }
         bossShots.forEach((shot, index) => {
             ctx.fillStyle = "red";
@@ -700,36 +847,41 @@ function triggerBudgetBoss() {
             if (shot.x > player.x && shot.x < player.x + player.width && shot.y > player.y && shot.y < player.y + player.height) {
                 bossShots.splice(index, 1);
                 player.hp--;
-                if (!isMuted) playerHitSound.play().catch(() => console.log("Spelare träffljud kunde inte spelas"));
+                if (!isMuted) playerHitSound.play().catch((err) => console.log("Spelare träffljud kunde inte spelas:", err));
                 if (player.hp <= 0) endGame(false);
             }
         });
 
+        // Eldbollar
         const currentTime = Date.now();
         if (currentTime - lastFireballTime >= 5000) {
             const angle = Math.atan2(player.y - (boss.y + boss.height / 2), player.x - (boss.x + boss.width / 2));
-            fireballs.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, dx: Math.cos(angle) * 3, dy: Math.sin(angle) * 3, size: 30 });
+            fireballs.push({ x: boss.x + boss.width / 2, y: boss.y + boss.height / 2, dx: Math.cos(angle) * 6, dy: Math.sin(angle) * 6, size: 60 });
             lastFireballTime = currentTime;
         }
         fireballs.forEach((fireball, index) => {
-            ctx.beginPath();
-            ctx.arc(fireball.x, fireball.y, fireball.size / 2, 0, Math.PI * 2);
-            ctx.fillStyle = "orange";
-            ctx.fill();
-            ctx.closePath();
+            if (fireballImage.complete && fireballImage.naturalWidth !== 0) {
+                ctx.drawImage(fireballImage, fireball.x - fireball.size / 2, fireball.y - fireball.size / 2, fireball.size, fireball.size);
+            } else {
+                ctx.beginPath();
+                ctx.arc(fireball.x, fireball.y, fireball.size / 2, 0, Math.PI * 2);
+                ctx.fillStyle = "orange";
+                ctx.fill();
+                ctx.closePath();
+            }
             fireball.x += fireball.dx;
             fireball.y += fireball.dy;
             if (fireball.x < 0 || fireball.x > canvas.width || fireball.y < 0 || fireball.y > canvas.height) fireballs.splice(index, 1);
             if (fireball.x > player.x && fireball.x < player.x + player.width && fireball.y > player.y && fireball.y < player.y + player.height) {
                 fireballs.splice(index, 1);
-                player.hp--;
-                if (!isMuted) playerHitSound.play().catch(() => console.log("Spelare träffljud kunde inte spelas"));
+                player.hp = player.hp * 0.5; // 50% livsförlust
+                if (!isMuted) playerHitSound.play().catch((err) => console.log("Spelare träffljud kunde inte spelas:", err));
                 if (player.hp <= 0) endGame(false);
             }
         });
 
-        document.getElementById("fps-score").textContent = `Boss HP: ${boss.hp} | Ditt HP: ${player.hp}`;
-        if (gameActive) requestAnimationFrame(updateGame);
+        document.getElementById("fps-score").textContent = `Boss HP: ${boss.hp} | Ditt HP: ${player.hp.toFixed(1)}`;
+        if (gameActive) requestAnimationFrame(updateGame); // Säkerställ att loopen körs
     }
 
     function endGame(won) {
@@ -758,6 +910,7 @@ function triggerBudgetBoss() {
         }, 2000);
     }
 
+    // Starta spelet omedelbart
     updateGame();
 }
 
@@ -765,14 +918,51 @@ function startMoneyRain(amount) {
     const rainContainer = document.getElementById("money-rain");
     rainContainer.innerHTML = "";
     let numDollars = amount <= 500 ? 5 : amount <= 5000 ? 10 : amount <= 10000 ? 20 : amount <= 20000 ? 30 : 50;
-    for (let i = 0; i < numDollars; i++) {
-        const dollar = document.createElement("div");
-        dollar.className = "dollar";
-        dollar.style.left = `${Math.random() * 100}vw`;
-        dollar.style.animationDelay = `${Math.random() * 2}s`;
-        rainContainer.appendChild(dollar);
+
+    const moneyImage = new Image();
+    moneyImage.src = "https://png.pngtree.com/png-vector/20230906/ourmid/pngtree-bent-one-dollar-bill-white-png-image_9973055.png";
+    moneyImage.onload = () => {
+        console.log("Pengabild laddad framgångsrikt!");
+        createDollars();
+    };
+    moneyImage.onerror = () => {
+        console.error("Fel vid laddning av original pengabild. Försöker fallback-bild.");
+        moneyImage.src = "https://via.placeholder.com/188x93.png?text=Dollar"; // Större placeholder
+        moneyImage.onload = () => {
+            console.log("Fallback-bild laddad.");
+            createDollars();
+        };
+        moneyImage.onerror = () => {
+            console.error("Ingen bild kunde laddas. Elementen skapas utan bakgrund.");
+            createDollars(true);
+        };
+    };
+
+    function createDollars(useFallback = false) {
+        for (let i = 0; i < numDollars; i++) {
+            const dollar = document.createElement("div");
+            dollar.className = "dollar";
+            dollar.style.left = `${Math.random() * 100}vw`;
+            dollar.style.animationDelay = `${Math.random() * 2}s`;
+
+            if (!useFallback && moneyImage.complete && moneyImage.naturalWidth !== 0) {
+                dollar.style.backgroundImage = `url(${moneyImage.src})`;
+                dollar.style.backgroundSize = "contain";
+                dollar.style.backgroundRepeat = "no-repeat";
+                dollar.style.backgroundPosition = "center";
+                dollar.style.width = "188px"; // 250% av 75px
+                dollar.style.height = "93px"; // 250% av 37px
+                dollar.style.backgroundColor = "transparent"; // Säkerställ ingen färg
+            } else {
+                dollar.style.width = "188px";
+                dollar.style.height = "93px";
+                dollar.style.background = "none"; // Ingen bakgrund alls
+            }
+
+            rainContainer.appendChild(dollar);
+        }
+        setTimeout(() => rainContainer.innerHTML = "", 8000); // Rensa efter 8 sekunder
     }
-    setTimeout(() => rainContainer.innerHTML = "", 8000);
 }
 
 function playClickSound() {
